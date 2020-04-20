@@ -1,0 +1,23 @@
+.DS_Store
+.python-version
+.vscode
+.idea
+__pycache__
+samples/
+.eggs
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+
+# Python setup.py build artifacts
+.eggs/
+build/
+
+# our temp folder
+tmp/
