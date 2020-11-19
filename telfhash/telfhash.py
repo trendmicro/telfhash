@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''
+"""
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
 distributed with this work for additional information
@@ -17,7 +17,7 @@ software distributed under the License is distributed on an
 KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
-'''
+"""
 
 # make it Python 2 compatible
 from __future__ import print_function
@@ -25,24 +25,25 @@ from __future__ import print_function
 import argparse
 import os
 import sys
-import hashlib
 import re
 import functools
 import operator
 import glob
 import json
-import tlsh # https://github.com/trendmicro/tlsh
 import elftools
 from elftools.elf.elffile import ELFFile
-from capstone import *
+from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, CS_ARCH_ARM, \
+                     CS_MODE_ARM, CS_ARCH_MIPS, CS_MODE_MIPS32, CS_MODE_BIG_ENDIAN, Cs
+import tlsh # https://github.com/trendmicro/tlsh
+import grouping
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import grouping
+
 
 # The directory containing this file
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(HERE, 'VERSION')) as version_file:
+with open(os.path.join(HERE, "VERSION")) as version_file:
     VERSION = version_file.read().strip()
 
 EXCLUSIONS_REGEX = [
@@ -92,34 +93,34 @@ def perror(msg):
 
 def build_exclude_list():
     EXCLUDE_LIST = {}
-    EXCLUDE_LIST['simple'] = []
-    EXCLUDE_LIST['regex'] = []
+    EXCLUDE_LIST["simple"] = []
+    EXCLUDE_LIST["regex"] = []
 
     excludes = {}
-    excludes['simple'] = []
-    excludes['regex'] = []
+    excludes["simple"] = []
+    excludes["regex"] = []
 
     for exclude_string in EXCLUSIONS_STRINGS:
-        EXCLUDE_LIST['simple'].append(exclude_string)
+        EXCLUDE_LIST["simple"].append(exclude_string)
 
     for exclude_re in EXCLUSIONS_REGEX:
         try:
-            EXCLUDE_LIST['regex'].append(re.compile(exclude_re))
-        except Exception as e:
-            perror("Skipping '{}': {}".format(exclude_re, e.msg))
+            EXCLUDE_LIST["regex"].append(re.compile(exclude_re))
+        except Exception as exception:
+            perror("Skipping '{}': {}".format(exclude_re, exception.msg))
 
     return EXCLUDE_LIST
 
 
 def can_exclude(symbol, exclude_list):
 
-    if symbol in exclude_list['simple']:
+    if symbol in exclude_list["simple"]:
         return True
 
     # use a list comprehension to generate an array of booleans if they match the list of supplied regexes
     # we then use functools.reduce() and operator.or_() to determine if at least one of the regex matched the
     # symbol we're searching
-    re_matches = [True if x.search(symbol) else False for x in exclude_list['regex']]
+    re_matches = [True if x.search(symbol) else False for x in exclude_list["regex"]]
     if functools.reduce(operator.or_, re_matches, False):
         return True
 
@@ -129,17 +130,17 @@ def can_exclude(symbol, exclude_list):
 def get_hash(symbols_list):
 
     symbol_string = ",".join(symbols_list)
-    encoded_symbol_string = symbol_string.encode('ascii')
+    encoded_symbol_string = symbol_string.encode("ascii")
 
     return tlsh.forcehash(encoded_symbol_string).lower()
 
 
 def elf_get_imagebase(elf):
-    i=0
+    i = 0
     while elf.iter_segments():
-        if (elf._get_segment_header(i)['p_type'] == 'PT_LOAD'):
-            return elf._get_segment_header(i)['p_vaddr']
-        i+=1
+        if elf._get_segment_header(i)["p_type"] == "PT_LOAD":
+            return elf._get_segment_header(i)["p_vaddr"]
+        i += 1
 
     return 0
 
@@ -147,12 +148,12 @@ def elf_get_imagebase(elf):
 def elf_is_static_stripped(elf):
     # If either PT_INTERP segment or .interp section is present, the executable is dynamic
     for s in elf.iter_segments():
-        if (s['p_type'] == 'PT_INTERP'):
+        if s["p_type"] == "PT_INTERP":
             return False
 
     # If .symtab is present, symbols were NOT stripped
     for s in elf.iter_sections():
-        if (s['sh_type'] == 'SHT_SYMTAB'):
+        if s["sh_type"] == "SHT_SYMTAB":
             return False
 
     return True
@@ -176,13 +177,13 @@ def get_ep_section_or_segment(elf):
 
     # if we reached this point, then we failed to get the code section using
     # the above method. we use the default '.text' section
-    code_section_or_segment =  elf.get_section_by_name('.text')
+    code_section_or_segment = elf.get_section_by_name(".text")
 
     if code_section_or_segment:
         return code_section_or_segment
 
     for segment in elf.iter_segments():
-        if segment['p_type'] == "PT_LOAD" and segment['p_flags'] == 5: # r-x segment
+        if segment["p_type"] == "PT_LOAD" and segment["p_flags"] == 5: # r-x segment
             return segment
 
     return code_section_or_segment
@@ -197,10 +198,10 @@ def extract_call_destinations(elf):
     # if we only got the segment, start extracting calls from the EP
     if type(code_section_or_segment) == elftools.elf.segments.Segment:
         ofs = elf.header.e_entry
-        code_data = code_section_or_segment.data()[ofs - code_section_or_segment['p_vaddr']:]
+        code_data = code_section_or_segment.data()[ofs - code_section_or_segment["p_vaddr"]:]
     # otherwise we use the code section
     else:
-        ofs = elf_get_imagebase(elf) + code_section_or_segment['sh_offset']
+        ofs = elf_get_imagebase(elf) + code_section_or_segment["sh_offset"]
         code_data = code_section_or_segment.data()
 
     # get the architecture of our ELF file.
@@ -221,13 +222,13 @@ def extract_call_destinations(elf):
         for i in md.disasm(code_data, ofs):
             if arch in ("x86", "x64") and i.mnemonic == "call":
                 # Consider only call to absolute addresses
-                if i.op_str.startswith('0x'):
+                if i.op_str.startswith("0x"):
                     address = i.op_str[2:] # cut off '0x' prefix
                     if not address in symbols_list:
                         symbols_list.append(address)
-                        
+
             elif arch == "ARM" and i.mnemonic.startswith("bl"):
-                if i.op_str.startswith('#0x'):
+                if i.op_str.startswith("#0x"):
                     address = i.op_str[3:]
                     if not address in symbols_list:
                         symbols_list.append(address)
@@ -256,7 +257,7 @@ def extract_symbols(filepath, **kwargs):
     else:
         exclude_list = kwargs["exclude_list"]
 
-    fh = open(filepath, 'rb')
+    fh = open(filepath, "rb")
 
     try:
         elf = ELFFile(fh)
@@ -265,25 +266,25 @@ def extract_symbols(filepath, **kwargs):
             fh.close()
         raise
 
-    # Types: 'SHT_SYMTAB', 'SHT_DYNSYM', 'SHT_SUNW_LDYNSYM' 
+    # Types: 'SHT_SYMTAB', 'SHT_DYNSYM', 'SHT_SUNW_LDYNSYM'
 
     if debug:
-        print(elf['e_ident']['EI_CLASS'])
+        print(elf["e_ident"]["EI_CLASS"])
 
-    symtab=''
+    symtab = ""
     for s in elf.iter_sections():
-        if (s['sh_size'] <= 0):
+        if s["sh_size"] <= 0:
             continue
 
-        if (s['sh_type'] == 'SHT_DYNSYM'):
+        if s["sh_type"] == "SHT_DYNSYM":
             symtab = s
             break # dynamic symbol table has higher priority
 
-        elif (s['sh_type'] == 'SHT_SYMTAB'):
+        elif s["sh_type"] == "SHT_SYMTAB":
             symtab = s
             break
 
-    if (not symtab):
+    if not symtab:
         call_destinations = extract_call_destinations(elf)
         fh.close()
 
@@ -294,19 +295,19 @@ def extract_symbols(filepath, **kwargs):
         return call_destinations
 
     if debug:
-        print('{} symbols found'.format(symtab.num_symbols()))
+        print("{} symbols found".format(symtab.num_symbols()))
 
     symbols_list = []
-    i=0
+    i = 0
     for sym in symtab.iter_symbols():
-        sym_type = sym.entry['st_info']['type']
-        sym_bind = sym.entry['st_info']['bind']
-        sym_visibility = sym.entry['st_other']['visibility']
+        sym_type = sym.entry["st_info"]["type"]
+        sym_bind = sym.entry["st_info"]["bind"]
+        sym_visibility = sym.entry["st_other"]["visibility"]
 
-        if (sym_type != 'STT_FUNC' or
-            sym_bind != 'STB_GLOBAL' or
-            sym_visibility != 'STV_DEFAULT' or
-            len(sym.name) <= 0):
+        if (sym_type != "STT_FUNC" or
+                sym_bind != "STB_GLOBAL" or
+                sym_visibility != "STV_DEFAULT" or
+                len(sym.name) <= 0):
             continue
 
         # Function name exceptions
@@ -315,7 +316,7 @@ def extract_symbols(filepath, **kwargs):
 
         i += 1
         symbols_list.append(sym.name.lower()) # lowercase
-    
+
     # sort the symbol list
     symbols_list.sort()
 
@@ -331,9 +332,9 @@ def extract_symbols(filepath, **kwargs):
 
 def fopen(fname):
     try:
-        fh = open(fname, 'rb')
-    except:
-        perror('{}: could not open file for reading'.format(fname))
+        fh = open(fname, "rb")
+    except FileNotFoundError:
+        perror("{}: could not open file for reading".format(fname))
     return fh
 
 
@@ -370,14 +371,14 @@ def get_max_len(files_list):
 
 def get_args():
     parser = argparse.ArgumentParser(prog="telfhash")
-    parser.add_argument('-g', '--group', help='Group the files according to how close their telfhashes are', action='store_true')
-    parser.add_argument('-t', '--threshold', default="50", help='Minimum distance between telfhashes to be considered as related. Only works with -g/--group. Defaults to 50')
-    parser.add_argument('-r', '--recursive', default=False, help='Deep dive into all the subfolders. Input should be a folder', action='store_true')
-    parser.add_argument('-o', '--output', default=None, help='Output file')
-    parser.add_argument('-f', '--format', default=None, help='Log output format. Accepts tsv or json. If -o/--output is not specified, formatted output is printed on stdout')
-    parser.add_argument('-d', '--debug', help='Print debug messages', action='store_true')
-    parser.add_argument('-v', '--version', help='Print version', action='version', version="%(prog)s {}".format(VERSION))
-    parser.add_argument('files', help='Target ELF file(s). Accepts wildcards', default=[], nargs='+')
+    parser.add_argument("-g", "--group", help="Group the files according to how close their telfhashes are", action="store_true")
+    parser.add_argument("-t", "--threshold", default="50", help="Minimum distance between telfhashes to be considered as related. Only works with -g/--group. Defaults to 50")
+    parser.add_argument("-r", "--recursive", default=False, help="Deep dive into all the subfolders. Input should be a folder", action="store_true")
+    parser.add_argument("-o", "--output", default=None, help="Output file")
+    parser.add_argument("-f", "--format", default=None, help="Log output format. Accepts tsv or json. If -o/--output is not specified, formatted output is printed on stdout")
+    parser.add_argument("-d", "--debug", help="Print debug messages", action="store_true")
+    parser.add_argument("-v", "--version", help="Print version", action="version", version="%(prog)s {}".format(VERSION))
+    parser.add_argument("files", help="Target ELF file(s). Accepts wildcards", default=[], nargs="+")
     args = parser.parse_args()
 
     # after parsing, args.files is a list
@@ -405,7 +406,7 @@ def get_args():
 def telfhash_single(filepath, **kwargs):
     result = {}
     result["file"] = filepath
-    result["telfhash"] = '-'
+    result["telfhash"] = "-"
     result["msg"] = ""
 
     debug = False
@@ -436,7 +437,7 @@ def telfhash_single(filepath, **kwargs):
 
             # if the hash of our symbols generated a blank string
             if len(h) == 0:
-                h = '-'
+                h = "-"
 
             result["telfhash"] = h
         else:
@@ -511,26 +512,26 @@ def group(telfhash_results, threshold=50):
 
 
 def output_format_tsv(args, results):
-    if args['output'] is None:
+    if args["output"] is None:
         # output to stdout
         for result in results:
-            print("{}\t{}".format(result['file'], result['telfhash']))
+            print("{}\t{}".format(result["file"], result["telfhash"]))
 
     else:
-        with open(args['output'], 'w') as fh:
+        with open(args["output"], "w") as fh:
             for result in results:
-                fh.write("{}\t{}\n".format(result['file'], result['telfhash']))
+                fh.write("{}\t{}\n".format(result["file"], result["telfhash"]))
 
 
 def output_format_json(args, results):
     json_output = json.dumps(results)
 
-    if args['output'] is None:
+    if args["output"] is None:
         # output to stdout
         print("{}".format(json_output))
 
     else:
-        with open(args['output'], 'w') as fh:
+        with open(args["output"], "w") as fh:
             fh.write("{}\n".format(json_output))
 
 
@@ -550,20 +551,20 @@ def print_hashes(args):
         # data is printed as soon as the data is obtained so that the user sees
         # data right away, and it makes the console more active.
         # only go this path if args['output']=None and args['format']=None
-        if args['output'] is None and args['format'] is None:
+        if args["output"] is None and args["format"] is None:
             if result["telfhash"] is not None:
                 print("{:<{max_len}}  {}".format(result["file"], result["telfhash"], max_len=args["max_len"]))
             else:
-                print('{:<{max_len}}  {msg}'.format(filepath, max_len=args["max_len"], msg=result["msg"]))
+                print("{:<{max_len}}  {msg}".format(filepath, max_len=args["max_len"], msg=result["msg"]))
 
-    if args['format'] == 'tsv':
+    if args["format"] == "tsv":
         output_format_tsv(args, results)
 
-    elif args['format'] == 'json':
+    elif args["format"] == "json":
         output_format_json(args, results)
 
-    if args['group'] and len(results) > 1:
-        groups = grouping.group(results, threshold=args['threshold'])
+    if args["group"] and len(results) > 1:
+        groups = grouping.group(results, threshold=args["threshold"])
 
         print()
         for i in range(len(groups["grouped"])):
@@ -589,6 +590,7 @@ def _main():
         return 1
 
     print_hashes(args)
+    return 0
 
 
 def main():

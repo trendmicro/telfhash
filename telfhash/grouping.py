@@ -1,4 +1,4 @@
-'''
+"""
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements.  See the NOTICE file
 distributed with this work for additional information
@@ -15,7 +15,7 @@ software distributed under the License is distributed on an
 KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
-'''
+"""
 
 # make it Python 2 compatible
 from __future__ import print_function
@@ -26,7 +26,7 @@ import functools
 import operator
 
 # https://github.com/trendmicro/tlsh
-import tlsh 
+import tlsh
 
 
 def get_combination(telfhash_data):
