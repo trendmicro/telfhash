@@ -133,6 +133,8 @@ If telfhash was installed via the `python setup.py install` command, the `telfha
     >>> telfhash.telfhash("/bin/ls", "/bin/lsattr")
     [{'file': '/bin/ls', 'telfhash': '1ff0994248230af71762c8b15c0533da9a208b2656e5bf302f1985d04e2a5be779284f', 'msg': ''}, {'file': '/bin/lsattr', 'telfhash': '69c08017dd0fe4f35dd90d589c07380ae7dee06057b9d7400d3c46c1755058c5d5555d', 'msg': ''}]
 
-## Publications
+## Publications / Resources
 
-[Grouping Linux IoT Malware Samples With Trend Micro ELF Hash aka telfash](https://blog.trendmicro.com/trendlabs-security-intelligence/) - Trend Micro Blog, 2020 April 20th.
+* [Similarity brings your threat hunting to the next level](https://www.brighttalk.com/webcast/18282/452440) - VirusTotal / Trend Micro / Trinity Cyber - November 25, 2020
+* [VirusTotal Now Supports Trend Micro ELF Hash](https://www.trendmicro.com/en_us/research/20/j/virustotal-now-supports-trend-micro-elf-hash.html) - Trend Micro Research - October 13, 2020
+* [Grouping Linux IoT Malware Samples With Trend Micro ELF Hash aka telfash](https://blog.trendmicro.com/trendlabs-security-intelligence/) - Trend Micro Blog -  April 20, 2020.
