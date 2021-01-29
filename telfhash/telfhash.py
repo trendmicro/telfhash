@@ -35,9 +35,9 @@ from elftools.elf.elffile import ELFFile
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, CS_ARCH_ARM, \
                      CS_MODE_ARM, CS_ARCH_MIPS, CS_MODE_MIPS32, CS_MODE_BIG_ENDIAN, Cs
 import tlsh # https://github.com/trendmicro/tlsh
-import grouping
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import grouping
 
 
 # The directory containing this file
