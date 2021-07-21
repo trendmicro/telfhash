@@ -32,10 +32,10 @@ import tlsh
 def get_combination(telfhash_data):
 
     #
-    # TLSH hash is 70 characters long. if the telfhash is not 70
+    # TLSH hash is 72 characters long. if the telfhash is not 72
     # characters in length, exclude from the list
     #
-    files_list = [x for x in list(telfhash_data.keys()) if telfhash_data[x]["telfhash"] is not None and len(telfhash_data[x]["telfhash"]) == 70]
+    files_list = [x for x in list(telfhash_data.keys()) if telfhash_data[x]["telfhash"] is not None and len(telfhash_data[x]["telfhash"]) == 72]
 
     #
     # get the combination of all the possible pairs of filenames
@@ -67,7 +67,7 @@ def get_distances(telfhash_data, files_combination):
     for element in files_combination:
         file1 = element[0]
         file2 = element[1]
-        distance = tlsh.diff(telfhash_data[file1]["telfhash"], telfhash_data[file2]["telfhash"])
+        distance = tlsh.diff(telfhash_data[file1]["telfhash"].upper(), telfhash_data[file2]["telfhash"].upper())
 
         distances.append((file1, file2, distance))
 

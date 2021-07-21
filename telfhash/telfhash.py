@@ -46,6 +46,14 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(HERE, "VERSION")) as version_file:
     VERSION = version_file.read().strip()
 
+
+# we will only support the new TLSH versions
+#
+TLSH_MIN_VERSION = '4.2.1'
+from packaging import version
+if version.parse(tlsh.__version__) < version.parse(TLSH_MIN_VERSION):
+    raise Exception("telfhash v{} only supports tlsh version {} and higher. You have tlsh version {}".format(VERSION, TLSH_MIN_VERSION, tlsh.__version__))
+
 EXCLUSIONS_REGEX = [
     r"^[_\.].*$",       # Function names starting with . or _
     "^.*64$",           # x64-64 specific functions

@@ -1,4 +1,6 @@
 capstone>=4.0.1
 nose>=1.3.7
+packaging>=20.9
+py-tlsh>=4.5.0
 pyelftools>=0.25
 python-tlsh>=3.17.0
