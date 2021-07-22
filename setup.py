@@ -45,6 +45,7 @@ setup(
     version=VERSION,
     description="Generates hash for ELF files",
     long_description=readme(),
+    long_description_content_type='text/markdown',
     url="https://github.com/trendmicro/telfhash",
     author="Fernando Merces, Joey Costoya",
     license="Apache",
