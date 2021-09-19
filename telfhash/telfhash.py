@@ -140,7 +140,7 @@ def get_hash(symbols_list):
     symbol_string = ",".join(symbols_list)
     encoded_symbol_string = symbol_string.encode("ascii")
 
-    return tlsh.forcehash(encoded_symbol_string).lower()
+    return tlsh.forcehash(encoded_symbol_string)
 
 
 def elf_get_imagebase(elf):
