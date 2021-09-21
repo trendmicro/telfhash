@@ -138,7 +138,7 @@ def can_exclude(symbol, exclude_list):
 def get_hash(symbols_list):
 
     symbol_string = ",".join(symbols_list)
-    encoded_symbol_string = symbol_string.encode("ascii")
+    encoded_symbol_string = symbol_string.encode("ascii", "ignore")
 
     return tlsh.forcehash(encoded_symbol_string)
 
@@ -358,7 +358,7 @@ def expand_filepath(input_filepath, recursive=False):
                 files_list.append("{}".format(os.path.join(i[0], j)))
 
     else:
-        for filepath in glob.glob(glob.glob_escape(input_filepath)):
+        for filepath in glob.glob(glob.escape(input_filepath)):
             if os.path.isfile(filepath):
                 files_list.append(filepath)
 
