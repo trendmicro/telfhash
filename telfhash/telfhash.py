@@ -352,13 +352,13 @@ def expand_filepath(input_filepath, recursive=False):
 
     files_list = []
 
-    if recursive is True:
+    if recursive:
         for i in os.walk(input_filepath):
             for j in i[2]:
                 files_list.append("{}".format(os.path.join(i[0], j)))
 
     else:
-        for filepath in glob.glob(input_filepath):
+        for filepath in glob.glob(glob.glob_escape(input_filepath)):
             if os.path.isfile(filepath):
                 files_list.append(filepath)
 
