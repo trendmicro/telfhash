@@ -144,11 +144,9 @@ def get_hash(symbols_list):
 
 
 def elf_get_imagebase(elf):
-    i = 0
-    while elf.iter_segments():
+    for i, _ in enumerate(elf.iter_segments()):
         if elf._get_segment_header(i)["p_type"] == "PT_LOAD":
             return elf._get_segment_header(i)["p_vaddr"]
-        i += 1
 
     return 0
 
