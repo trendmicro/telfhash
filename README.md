@@ -1,10 +1,18 @@
 # Trend Micro ELF Hash (telfhash)
 
-telfhash is symbol hash for ELF files, just like imphash is imports hash for PE files.
+telfhash is symbol hash for ELF files, just like imphash is imports hash for PE files. With telfhash, you can cluster ELF files by similarity based on symbols. This is particularly useful for clustering malicious samples. If a sample has no symbols, telfhash uses its call addresses destinations to emulate a symbol list. See [Resources](#Resources) section for more information.
 
 ## Installation
 
-### Requirements
+### pip
+
+The easiest way to get telfhash working is installing it via pip:
+
+`pip install telfhash`
+
+### Manual
+
+#### Requirements
 
 telfhash uses TLSH in generating the hash. TLSH must be installed in your system in order for telfhash to work.
 
@@ -14,7 +22,7 @@ You can install TLSH from here:
 
 The TLSH git repo has detailed instructions on how to compile and install the TLSH binaries and libraries. Don't forget to also install the TLSH Python library. telfhash uses the TLSH Python library to generate the actual hash.
 
-### Installing
+#### Installing
 
 Clone the telfhash repository from here:
 
@@ -25,8 +33,6 @@ Use the `setup.py` to install the telfhash library:
     python setup.py install
 
 ## Usage
-
-If the TLSH Python library is not installed, telfhash will generate an exception error.
 
 ### Command line
 
@@ -133,7 +139,7 @@ If telfhash was installed via the `python setup.py install` command, the `telfha
     >>> telfhash.telfhash("/bin/ls", "/bin/lsattr")
     [{'file': '/bin/ls', 'telfhash': '1ff0994248230af71762c8b15c0533da9a208b2656e5bf302f1985d04e2a5be779284f', 'msg': ''}, {'file': '/bin/lsattr', 'telfhash': '69c08017dd0fe4f35dd90d589c07380ae7dee06057b9d7400d3c46c1755058c5d5555d', 'msg': ''}]
 
-## Publications / Resources
+## Resources
 
 * [Similarity brings your threat hunting to the next level](https://www.brighttalk.com/webcast/18282/452440) - VirusTotal / Trend Micro / Trinity Cyber - November 25, 2020
 * [VirusTotal Now Supports Trend Micro ELF Hash](https://www.trendmicro.com/en_us/research/20/j/virustotal-now-supports-trend-micro-elf-hash.html) - Trend Micro Research - October 13, 2020
